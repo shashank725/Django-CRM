@@ -1,0 +1,20 @@
+{% extends 'customer/main.html' %}
+{% load static %}
+
+{% block content %}
+<br>
+<div class="row">
+	<div class="col-md-6">
+		<div class="card card-body">
+
+            <p>Are you sure you want to delete "{{order}}"" ?</p>
+            <form action="" method="post">                <!-- action="{% url 'customer:delete_order' order.id %}" can also be used -->
+            {% csrf_token %}
+                <a class="btn btn-sm btn-warning" href="{% url 'customer:home' %}">Cancel</a>
+                <input class="btn btn-sm btn-danger" type="submit" name="Confrim">
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
