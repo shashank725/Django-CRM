@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required     #Login required de
 from django.contrib.auth.models import Group
 
 from customer.models import Customer, Order, Product, Tag
-from .forms import OrderForm, CreateUserForm
+from .forms import OrderForm, CreateUserForm, CustomerForm
 from .filters import OrderFilter
 from .decorators import unauthenticated_user, allowed_users, admin_only
 
@@ -23,9 +23,10 @@ def registerPage(request):
             user = form.save()
 
             group = Group.objects.get(name='customers')   
-            user.groups.add(group)                               #Adding the user to the group         
+            user.groups.add(group)                              #Adding the user to the group         
+            Customer.objects.create(user=user,)                 #When a user is registered, a Customer is being registered at the same time
 
-            username = form.cleaned_data.get('username')         #Way of accessing form data
+            username = form.cleaned_data.get('username')        #Way of accessing form data
             messages.success(request, 'Account created successfully' + username)  #Flash messages
 
             return redirect('customer:login')
@@ -54,9 +55,28 @@ def logoutUser(request):
     return redirect('customer:login')
 
 
+@login_required(login_url='/login')
+@allowed_users(allowed_roles=['customers'])
 def userPage(request):
-    context = {}
+    orders = request.user.customer.order_set.all()
+    total_orders = orders.count()
+    delivered = orders.filter(status='Delivered').count()
+    pending = orders.filter(status='Pending').count()
+    context = {'orders':orders, 'total_orders':total_orders, 'delivered':delivered, 'pending':pending}
     return render(request, 'customer/user.html', context)
+
+
+@login_required(login_url='/login')
+@allowed_users(allowed_roles=['customers'])
+def accountSettings(request):
+    form = CustomerForm(instance=request.user.customer)
+    if request.method == 'POST':
+        form = CustomerForm(request.POST, request.FILES, instance=request.user.customer)
+        if form.is_valid():
+            form.save()
+    context = {'form':form}
+    return render(request, 'customer/account_settings.html', context)
+
 
 
 @login_required(login_url='/login')
@@ -73,11 +93,13 @@ def home(request):
     return render(request, 'customer/dashboard.html', context)
 
 
+
 @login_required(login_url='/login')
 @allowed_users(allowed_roles=['admin'])
 def products(request):
     products = Product.objects.all()
     return render(request, 'customer/products.html', {'products': products})
+
 
 
 @login_required(login_url='/login')
@@ -91,6 +113,7 @@ def customer(request, pk):
     orders = myFilter.qs
     context = {'customer':customer, 'orders':orders, 'total_order':total_order, 'myFilter':myFilter}
     return render(request, 'customer/customer.html', context)
+
 
 
 @login_required(login_url='/login')
@@ -115,6 +138,7 @@ def createOrder(request, pk):
     return render(request, 'customer/order_form.html', context)
 
 
+
 @login_required(login_url='/login')
 @allowed_users(allowed_roles=['admin'])
 def updateOrder(request, pk):
@@ -127,6 +151,7 @@ def updateOrder(request, pk):
             return redirect('/')
     context = {'form':form}
     return render(request, 'customer/order_form.html', context)
+
 
 
 @login_required(login_url='/login')
