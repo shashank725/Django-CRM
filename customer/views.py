@@ -22,9 +22,9 @@ def registerPage(request):
         if form.is_valid():
             user = form.save()
 
-            group = Group.objects.get(name='customers')   
-            user.groups.add(group)                              #Adding the user to the group         
-            Customer.objects.create(user=user,)                 #When a user is registered, a Customer is being registered at the same time
+            # group = Group.objects.get(name='customers')   
+            # user.groups.add(group)                              #Adding the user to the group         
+            # Customer.objects.create(user=user,)                 #When a user is registered, a Customer is being registered at the same time
 
             username = form.cleaned_data.get('username')        #Way of accessing form data
             messages.success(request, 'Account created successfully' + username)  #Flash messages
